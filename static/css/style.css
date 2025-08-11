@@ -178,3 +178,6 @@
     box-shadow: 0 8px 25px rgba(39, 73, 43, 0.7);
 }
 
+.package-card{border:none;border-radius:1rem;overflow:hidden;box-shadow:0 6px 16px rgba(0,0,0,.06);transition:transform .2s ease, box-shadow .2s ease}
+.package-card:hover{transform:translateY(-6px);box-shadow:0 12px 24px rgba(0,0,0,.12)}
+.package-card .badge{border-radius:999px}

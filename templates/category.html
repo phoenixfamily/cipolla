@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}پکیج‌ها | Cipolla{% endblock %}
+
+{% block content %}
+<section class="py-4">
+  <div class="container">
+
+    <!-- Header + Filters toggle (mobile) -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h1 class="h4 mb-0">پکیج‌های رژیمی</h1>
+      <button class="btn btn-outline-brand d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#filtersCanvas">
+        فیلترها
+      </button>
+    </div>
+
+    <div class="row g-4">
+      <!-- Sidebar Filters -->
+      <aside class="col-lg-3">
+        <div class="offcanvas-lg offcanvas-end" tabindex="-1" id="filtersCanvas">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title">فیلترها</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <form method="get" class="vstack gap-3" id="filtersForm">
+              <div>
+                <label class="form-label">جستجو</label>
+                <input type="search" class="form-control" name="q" value="{{ request.GET.q }}" placeholder="نام پکیج یا توضیحات...">
+              </div>
+
+              <div>
+                <label class="form-label">نوع رژیم</label>
+                <select class="form-select" name="diet">
+                  <option value="">همه</option>
+                  {% for d in diets %}
+                    <option value="{{ d.key }}" {% if request.GET.diet == d.key %}selected{% endif %}>{{ d.title }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div>
+                <label class="form-label d-flex justify-content-between">
+                  <span>حداکثر کالری هر وعده</span>
+                  <span class="text-muted small" id="kcalLabel">{% if request.GET.max_kcal %}{{ request.GET.max_kcal }}{% else %}—{% endif %}</span>
+                </label>
+                <input type="range" class="form-range" min="200" max="1200" step="50" name="max_kcal" value="{{ request.GET.max_kcal|default:800 }}" oninput="kcalLabel.textContent=this.value">
+                <div class="form-text">بر اساس میانگین کالری وعده‌های داخل پکیج</div>
+              </div>
+
+              <div>
+                <label class="form-label">حداقل پروتئین (گرم)</label>
+                <input type="number" class="form-control" name="min_protein" value="{{ request.GET.min_protein }}" placeholder="مثلاً 25">
+              </div>
+
+              <div>
+                <label class="form-label">محدوده قیمت (تومان)</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" name="min_price" value="{{ request.GET.min_price }}" placeholder="از">
+                  <span class="input-group-text">تا</span>
+                  <input type="number" class="form-control" name="max_price" value="{{ request.GET.max_price }}" placeholder="تا">
+                </div>
+              </div>
+
+              <div>
+                <label class="form-label">مرتب‌سازی</label>
+                <select class="form-select" name="sort">
+                  <option value="-created" {% if request.GET.sort == '-created' or not request.GET.sort %}selected{% endif %}>جدیدترین</option>
+                  <option value="price" {% if request.GET.sort == 'price' %}selected{% endif %}>ارزان‌ترین</option>
+                  <option value="-price" {% if request.GET.sort == '-price' %}selected{% endif %}>گران‌ترین</option>
+                </select>
+              </div>
+
+              <div class="d-flex gap-2">
+                <button class="btn btn-brand flex-fill" type="submit">اعمال فیلتر</button>
+                <a class="btn btn-outline-brand flex-fill" href="?">حذف فیلترها</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Results -->
+      <div class="col-lg-9">
+        {% if page_obj.paginator.count %}
+          <p class="text-muted small mb-3">{{ page_obj.paginator.count }} نتیجه یافت شد</p>
+        {% endif %}
+
+        <div class="row g-4">
+          {% for p in page_obj.object_list %}
+            {% include 'packages/partials/_package_card.html' with p=p %}
+          {% empty %}
+            <div class="col-12">
+              <div class="alert alert-light border text-center">
+                موردی مطابق با فیلترهای شما یافت نشد. <a href="?" class="alert-link">نمایش همه</a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.paginator.num_pages > 1 %}
+        <nav class="mt-4" aria-label="pagination">
+          <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+              <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode|cut:'page=' }}">قبلی</a></li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">قبلی</span></li>
+            {% endif %}
+
+            {% for i in page_obj.paginator.page_range %}
+              <li class="page-item {% if page_obj.number == i %}active{% endif %}"><a class="page-link" href="?page={{ i }}&{{ request.GET.urlencode|cut:'page=' }}">{{ i }}</a></li>
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+              <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode|cut:'page=' }}">بعدی</a></li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">بعدی</span></li>
+            {% endif %}
+          </ul>
+        </nav>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{# templates/packages/partials/_package_card.html #}
+<div class="col-md-6 col-xl-4">
+  <div class="card h-100 package-card">
+    {% if p.image %}
+      <img src="{{ p.image.url }}" class="card-img-top" alt="{{ p.title }}" loading="lazy">
+    {% else %}
+      <div class="ratio ratio-4x3 bg-light"></div>
+    {% endif %}
+    <div class="card-body d-flex flex-column">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <h3 class="h6 mb-0">{{ p.title }}</h3>
+        <span class="badge text-bg-success">{{ p.diet_type.title }}</span>
+      </div>
+      <p class="text-muted small flex-grow-1">{{ p.description|default:' ' |truncatechars:110 }}</p>
+
+      <div class="d-flex align-items-center justify-content-between mt-2">
+        <div class="small text-muted">
+          میانگین کالری: <strong>{{ p.avg_kcal|default:'—' }}</strong>
+        </div>
+        <div class="fw-bold">{{ p.base_price|floatformat:0 }} تومان</div>
+      </div>
+
+      <div class="d-grid mt-3">
+        <a href="{% url 'packages:detail' p.id %}" class="btn btn-success">جزئیات و خرید</a>
+      </div>
+    </div>
+  </div>
+</div>

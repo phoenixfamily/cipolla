@@ -23,6 +23,9 @@ from django.views.generic import RedirectView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('home/', include('home.urls')),  # صفحه اصلی
+
+    path('product/', include('product.urls')),  # صفحه اصلی
+
     path('', RedirectView.as_view(url='home/', permanent=True)),  # ریدایرکت دائمی
 
 ]
