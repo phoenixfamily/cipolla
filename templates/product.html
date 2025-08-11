@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ pkg.title }} | Cipolla{% endblock %}
+
+{% block content %}
+<section class="py-4">
+  <div class="container">
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{%- url 'home:home_view' -%}">خانه</a></li>
+        <li class="breadcrumb-item"><a href="{%- url 'packages:list' -%}">پکیج‌ها</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ pkg.title }}</li>
+      </ol>
+    </nav>
+
+    <div class="row g-4">
+      <div class="col-lg-6">
+        {% if pkg.image %}
+          <img src="{{ pkg.image.url }}" class="img-fluid rounded shadow-sm w-100" alt="{{ pkg.title }}">
+        {% else %}
+          <div class="ratio ratio-4x3 bg-light rounded"></div>
+        {% endif %}
+
+        {% if meals %}
+        <div class="mt-3">
+          <h2 class="h6">نمونه وعده‌ها</h2>
+          <div class="row g-2">
+            {% for m in meals|slice:":6" %}
+            <div class="col-6 col-md-4">
+              <div class="border rounded p-2 h-100 small">
+                <div class="fw-semibold">{{ m.title }}</div>
+                <div class="text-muted">{{ m.kcal }} kcal</div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% if meals|length > 6 %}
+            <div class="text-muted small mt-2">و {{ meals|length|add:-6 }} مورد دیگر...</div>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="col-lg-6">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <h1 class="h4 mb-0">{{ pkg.title }}</h1>
+          <span class="badge text-bg-success">{{ pkg.diet_type.title }}</span>
+        </div>
+        <p class="text-muted">{{ pkg.description }}</p>
+
+        <div class="row g-3 mb-3">
+          <div class="col-6">
+            <div class="border rounded p-3 h-100">
+              <div class="small text-muted">میانگین کالری هر وعده</div>
+              <div class="h5 mb-0">{{ avg_kcal|floatformat:0 }} kcal</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="border rounded p-3 h-100">
+              <div class="small text-muted">میانگین پروتئین</div>
+              <div class="h5 mb-0">{{ avg_protein|floatformat:0 }} g</div>
+            </div>
+          </div>
+        </div>
+
+        {% if allergens %}
+        <div class="mb-3">
+          <div class="small text-muted mb-1">آلرژن‌های احتمالی</div>
+          {% for a in allergens %}
+            <span class="badge rounded-pill text-bg-light border">{{ a.title }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Configurator -->
+        <form method="post" action="{% url 'cart:add' %}" class="vstack gap-3" id="pkgConfigurator">
+          {% csrf_token %}
+          <input type="hidden" name="package_id" value="{{ pkg.id }}">
+
+          <div class="row g-3">
+            <div class="col-sm-6">
+              <label class="form-label">تعداد روز در هفته</label>
+              <select class="form-select" name="days" id="daysSelect">
+                {% for d in 3|make_list %}{% endfor %}
+                {% for d in "3,4,5,6,7".split(',') %}
+                  <option value="{{ d }}" {% if d|add:0 == pkg.default_days %}selected{% endif %}>{{ d }} روز</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label">وعده در روز</label>
+              <select class="form-select" name="meals_per_day" id="mealsPerDaySelect">
+                {% for d in "1,2,3".split(',') %}
+                  <option value="{{ d }}" {% if d|add:0 == pkg.default_meals_per_day %}selected{% endif %}>{{ d }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label">سطح پروتئین</label>
+            <div class="btn-group" role="group">
+              <input type="radio" class="btn-check" name="protein_level" id="p1" value="base" checked>
+              <label class="btn btn-outline-brand" for="p1">معمولی</label>
+              <input type="radio" class="btn-check" name="protein_level" id="p2" value="high">
+              <label class="btn btn-outline-brand" for="p2">بالا (+15%)</label>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label">حذف مواد (اختیاری)</label>
+            <select class="form-select" name="exclude[]" multiple>
+              {% for a in all_allergens %}
+                <option value="{{ a.id }}">{{ a.title }}</option>
+              {% endfor %}
+            </select>
+            <div class="form-text">این مورد در پلانر هفتگی دقیق‌تر اعمال می‌شود.</div>
+          </div>
+
+          <div class="border rounded p-3 bg-light d-flex align-items-center justify-content-between">
+            <div class="small text-muted">قیمت نهایی</div>
+            <div class="h4 mb-0"><span id="finalPrice" data-base="{{ pkg.base_price|floatformat:0 }}">{{ pkg.base_price|floatformat:0 }}</span> تومان</div>
+          </div>
+
+          <div class="d-grid d-sm-flex gap-2">
+            <button class="btn btn-success btn-lg flex-fill" type="submit">
+              افزودن به سبد
+            </button>
+            <a href="{% url 'planner:start' %}?pkg={{ pkg.id }}" class="btn btn-outline-brand btn-lg flex-fill">
+              شخصی‌سازی در پلانر
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  const priceEl = document.getElementById('finalPrice');
+  const base = parseFloat(priceEl.dataset.base);
+  const days = document.getElementById('daysSelect');
+  const mpd = document.getElementById('mealsPerDaySelect');
+  const protein = document.querySelectorAll('input[name="protein_level"]');
+
+  function recalc(){
+    const d = parseInt(days.value||0);
+    const m = parseInt(mpd.value||0);
+    let total = base * (d/ {{ pkg.default_days|default:5 }} ) * (m / {{ pkg.default_meals_per_day|default:1 }} );
+    const level = [...protein].find(p=>p.checked)?.value;
+    if(level === 'high') total *= 1.15; // 15% افزایش برای پروتئین بالا
+    priceEl.textContent = Math.round(total).toLocaleString('fa-IR');
+  }
+  [days, mpd, ...protein].forEach(el=>el.addEventListener('change', recalc));
+  recalc();
+})();
+</script>
+{% endblock %}
