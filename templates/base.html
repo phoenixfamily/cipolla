@@ -12,7 +12,7 @@
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg bg-white shadow-sm">
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
     <div class="container">
         <a class="navbar-brand fw-bold" href="/">Cipolla</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
@@ -21,7 +21,7 @@
         <div class="collapse navbar-collapse justify-content-between" id="mainNavbar">
             <ul class="navbar-nav mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="/">خانه</a>
+                    <a class="nav-link {% if request.resolver_match.url_name == 'home_view' %}active{% endif %}" href="{% url 'home:home_view' %}">خانه</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#">پکیج‌ها</a>
@@ -53,7 +53,7 @@
             <!-- Logo + Description -->
             <div class="col-md-4 mb-4">
                 <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'home:home_view' %}">
-                    <img src="{% static '' %}" alt="Cipolla" height="60">
+                    <img src="{% static 'images/logo.jpg' %}" alt="Cipolla" height="60">
                     <span class="fw-bold fs-5 d-none d-lg-inline">Cipolla</span>
                 </a>
                 <p class="small">
